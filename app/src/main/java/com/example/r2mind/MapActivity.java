@@ -1,19 +1,28 @@
 package com.example.r2mind;
 
-
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Color;
 import android.graphics.PointF;
 import android.location.Location;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+
 import com.naver.maps.geometry.LatLng;
 import com.naver.maps.map.CameraUpdate;
 import com.naver.maps.map.LocationTrackingMode;
@@ -24,6 +33,8 @@ import com.naver.maps.map.overlay.CircleOverlay;
 import com.naver.maps.map.overlay.Marker;
 import com.naver.maps.map.util.FusedLocationSource;
 import com.naver.maps.map.widget.LocationButtonView;
+
+import java.util.Map;
 
 public class MapActivity extends AppCompatActivity implements OnMapReadyCallback {
     private MapView mapView;
@@ -53,8 +64,19 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private int radius = 20;
     ///////////////////////
     //카메라 이동에 사용
-    private CameraUpdate cameraUpdate;
 
+    //서비스 사용에 사용//
+    private double myLat;
+    private double myLng;
+    private Button start;
+    private Button stop;
+    private Context mContext = this;
+    ///////////////////
+
+    private CameraUpdate cameraUpdate;
+    public MapActivity(){
+
+    }
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -71,13 +93,14 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         locationButtonView = findViewById(R.id.locationbuttonView);
         locationSource = new FusedLocationSource(this, LOCATION_PERMISSION_REQUEST_CODE);
     }
-    private void init(){
-        homeLocation = (Button)findViewById(R.id.setHome);
-        schoolLocation = (Button)findViewById(R.id.setSchool);
-        specLocation = (Button)findViewById(R.id.setPlace);
-        viewLat = (TextView)findViewById(R.id.locationLat);
-        viewLng = (TextView)findViewById(R.id.location_Lng);
-        circle20 = (Button)findViewById(R.id.c20);
+
+    private void init() {
+        homeLocation = (Button) findViewById(R.id.setHome);
+        schoolLocation = (Button) findViewById(R.id.setSchool);
+        specLocation = (Button) findViewById(R.id.setPlace);
+        viewLat = (TextView) findViewById(R.id.locationLat);
+        viewLng = (TextView) findViewById(R.id.location_Lng);
+        circle20 = (Button) findViewById(R.id.c20);
         circle20.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -85,7 +108,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 Toast.makeText(getApplicationContext(), "원의 반경이 20m로 설정되었습니다.", Toast.LENGTH_SHORT).show();
             }
         });
-        circle40 = (Button)findViewById(R.id.c40);
+        circle40 = (Button) findViewById(R.id.c40);
         circle40.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -93,7 +116,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 Toast.makeText(getApplicationContext(), "원의 반경이 40m로 설정되었습니다.", Toast.LENGTH_SHORT).show();
             }
         });
-        circle60 = (Button)findViewById(R.id.c60);
+        circle60 = (Button) findViewById(R.id.c60);
         circle60.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -101,7 +124,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 Toast.makeText(getApplicationContext(), "원의 반경이 60m로 설정되었습니다.", Toast.LENGTH_SHORT).show();
             }
         });
-        circle80 = (Button)findViewById(R.id.c80);
+        circle80 = (Button) findViewById(R.id.c80);
         circle80.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -109,9 +132,27 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 Toast.makeText(getApplicationContext(), "원의 반경이 80m로 설정되었습니다.", Toast.LENGTH_SHORT).show();
             }
         });
+        start = (Button) findViewById(R.id.startService);
+        start.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                alarm(mContext);
+            }
+        });
+        stop = (Button) findViewById(R.id.stopService);
+        stop.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+                Intent myIntent = new Intent(MapActivity.this, MyBroadCastReceiver.class);
+                PendingIntent pendingIntent = PendingIntent.getBroadcast(MapActivity.this, 0,myIntent,0);
+                alarmManager.cancel(pendingIntent);
+            }
+        });
     }
+
     @Override
-    public boolean onCreateOptionsMenu(Menu menu){
+    public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.actionbar_nosetting, menu);
         return true;
     }
@@ -132,16 +173,18 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         naverMap.setLocationTrackingMode(LocationTrackingMode.NoFollow);
 
         fixCircleOverlay.setCenter(new LatLng(36.54393309566764, 128.79502300564747));
-        fixCircleOverlay.setColor(Color.argb(50,0,0,255));
+        fixCircleOverlay.setColor(Color.argb(50, 0, 0, 255));
         fixCircleOverlay.setRadius(40);
         fixCircleOverlay.setMap(naverMap);
         naverMap.addOnLocationChangeListener(new NaverMap.OnLocationChangeListener() {
             @Override
             public void onLocationChange(@NonNull Location location) {
                 LatLng latlng = new LatLng(36.54393309566764, 128.79502300564747);
-                double distance = latlng.distanceTo(new LatLng(location.getLatitude(),location.getLongitude()));
-                if((int)distance > 20){
-                    Toast.makeText(getApplicationContext(),"20m 벗어났다 친구야!!!!" , Toast.LENGTH_SHORT).show();
+                myLat = location.getLatitude();
+                myLng = location.getLongitude();
+                double distance = latlng.distanceTo(new LatLng(location.getLatitude(), location.getLongitude()));
+                if ((int) distance > 20) {
+                    Toast.makeText(getApplicationContext(), "20m 벗어났다 친구야!!!!", Toast.LENGTH_SHORT).show();
                 }
 
                 myCircleOverlay.setCenter(new LatLng(location.getLatitude(), location.getLongitude()));
@@ -163,17 +206,17 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 touchCircleOverlay.setColor(Color.argb(50, 255, 0, 0));
                 touchCircleOverlay.setMap(naverMap);
 
-                viewLat.setText("위도 ="+ latLng.latitude);
-                viewLng.setText("경도 ="+ latLng.longitude);
+                viewLat.setText("위도 =" + latLng.latitude);
+                viewLng.setText("경도 =" + latLng.longitude);
             }
         });
         homeLocation.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                setMarker.setPosition(new LatLng(35.8270163642008,128.5297437081843));
+                setMarker.setPosition(new LatLng(35.8270163642008, 128.5297437081843));
                 setMarker.setCaptionText("집");
                 setMarker.setMap(naverMap);
-                cameraUpdate = CameraUpdate.scrollTo(new LatLng(35.8270163642008,128.5297437081843));
+                cameraUpdate = CameraUpdate.scrollTo(new LatLng(35.8270163642008, 128.5297437081843));
                 naverMap.moveCamera(cameraUpdate);
                 Toast.makeText(getApplicationContext(), "집을 선택하셨습니다.", Toast.LENGTH_SHORT).show();
 
@@ -181,13 +224,13 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 viewLng.setText("경도 =128.5297437081843");
             }
         });
-        schoolLocation.setOnClickListener(new View.OnClickListener(){
+        schoolLocation.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v){
+            public void onClick(View v) {
                 setMarker.setPosition(new LatLng(36.54358194590261, 128.79609904977818));
                 setMarker.setCaptionText("학교");
                 setMarker.setMap(naverMap);
-                cameraUpdate = CameraUpdate.scrollTo(new LatLng(36.54358194590261,128.79609904977818));
+                cameraUpdate = CameraUpdate.scrollTo(new LatLng(36.54358194590261, 128.79609904977818));
                 naverMap.moveCamera(cameraUpdate);
                 Toast.makeText(getApplicationContext(), "학교를 선택하셨습니다.", Toast.LENGTH_SHORT).show();
                 viewLat.setText("위도 =36.54358194590261");
@@ -200,7 +243,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 setMarker.setPosition(new LatLng(36.544531101315485, 128.7932009444453));
                 setMarker.setCaptionText("모임장소");
                 setMarker.setMap(naverMap);
-                cameraUpdate = CameraUpdate.scrollTo(new LatLng(36.544531101315485,128.7932009444453));
+                cameraUpdate = CameraUpdate.scrollTo(new LatLng(36.544531101315485, 128.7932009444453));
                 naverMap.moveCamera(cameraUpdate);
                 Toast.makeText(getApplicationContext(), "모임장소를 선택하셨습니다.", Toast.LENGTH_SHORT).show();
                 viewLat.setText("위도 =36.544531101315485");
@@ -266,5 +309,19 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         newUiOptions ^= View.SYSTEM_UI_FLAG_FULLSCREEN;
         newUiOptions ^= View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
         getWindow().getDecorView().setSystemUiVisibility(newUiOptions);
+    }
+    public void alarm(Context context){
+        long t = SystemClock.elapsedRealtime();
+        t+=30*1000;
+        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        Intent myIntent = new Intent(context, MyBroadCastReceiver.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, myIntent, 0);
+        if (Build.VERSION.SDK_INT >= 23) {
+            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, t, pendingIntent);
+        } else if (Build.VERSION.SDK_INT >= 19) {
+            alarmManager.setExact(AlarmManager.RTC_WAKEUP, t, pendingIntent);
+        } else {
+            alarmManager.set(AlarmManager.RTC_WAKEUP, t, pendingIntent);
+        }
     }
 }

@@ -36,6 +36,36 @@ public class MainActivity extends AppCompatActivity {
         init();
         initListener();
     }
+    //탭호스트 때문에 만든 Inner 클래스
+    private class SectionPagerAdapter extends FragmentPagerAdapter{
+        public SectionPagerAdapter(FragmentManager fm){
+            super(fm);
+        }
+        @Override
+        public int getCount(){
+            return 2;
+        }
+        @Override
+        public Fragment getItem(int position){
+            switch(position){
+                case 0 :
+                    return new fragment_top();
+                case 1:
+                    return new fragment_end();
+            }
+            return null;
+        }
+        @Override
+        public CharSequence getPageTitle(int position){
+            switch(position){
+                case 0 :
+                    return "test1";
+                case 1:
+                    return "test2";
+            }
+            return null;
+        }
+    }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -94,34 +124,5 @@ public class MainActivity extends AppCompatActivity {
         newUiOptions ^= View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
         getWindow().getDecorView().setSystemUiVisibility(newUiOptions);
     }
-    //탭호스트 때문에 만든 Inner 클래스 나중에 삭제해야됨~~~
-    private class SectionPagerAdapter extends FragmentPagerAdapter{
-        public SectionPagerAdapter(FragmentManager fm){
-            super(fm);
-        }
-        @Override
-        public int getCount(){
-            return 2;
-        }
-        @Override
-        public Fragment getItem(int position){
-            switch(position){
-                case 0 :
-                    return new fragment_top();
-                case 1:
-                    return new fragment_end();
-            }
-            return null;
-        }
-        @Override
-        public CharSequence getPageTitle(int position){
-            switch(position){
-                case 0 :
-                    return "test1";
-                case 1:
-                    return "test2";
-            }
-            return null;
-        }
-    }
+
 }

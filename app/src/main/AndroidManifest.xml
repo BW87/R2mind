@@ -4,7 +4,7 @@
 
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -12,6 +12,11 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+        <service
+            android:name=".LocationService"
+            android:enabled="true"
+            android:exported="true"></service>
+
         <meta-data
             android:name="com.google.android.actions"
             android:resource="@menu/actionbar_nosetting" />
@@ -19,12 +24,15 @@
             android:name="com.naver.maps.map.CLIENT_ID"
             android:value="gkeb5gua5a" />
 
-        <activity android:name=".MapActivity"
-            android:parentActivityName=".SettingActivity"/>
-        <activity android:name=".SettingActivity"
-            android:parentActivityName=".MainActivity"/>
-        <activity android:name=".CreateActivity"
-            android:parentActivityName=".MainActivity"/>
+        <activity
+            android:name=".MapActivity"
+            android:parentActivityName=".SettingActivity" />
+        <activity
+            android:name=".SettingActivity"
+            android:parentActivityName=".MainActivity" />
+        <activity
+            android:name=".CreateActivity"
+            android:parentActivityName=".MainActivity" />
         <activity android:name=".MainActivity" />
         <activity
             android:name=".SplashActivity"
@@ -35,6 +43,15 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <receiver
+            android:name=".MyBroadCastReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <action android:name="com.example.r2mind.broadcast"/>
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>
